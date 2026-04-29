@@ -1,0 +1,22 @@
+name: Processor Node
+
+on:
+  repository_dispatch:
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Process event
+        run: |
+          echo '${{ toJson(github.event.client_payload) }}' > event.json
+
+          jq '. + {processed:true}' event.json > processed.json
+
+      - name: Dispatch to Node C
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
+            https://api.github.com/repos/perronemirko/git-node-c-output/dispatches \
+            -d "{\"event_type\":\"output_event\",\"client_payload\":$(cat processed.json)}"
